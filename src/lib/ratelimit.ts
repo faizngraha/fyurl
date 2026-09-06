@@ -8,3 +8,12 @@ export const ratelimit = new Ratelimit({
   analytics: true,
   prefix: "custom-link-ratelimit",
 });
+
+// Anonymous user quota: 5 links per 7 days
+export const anonQuotaLimit = new Ratelimit({
+  redis: redis,
+  limiter: Ratelimit.slidingWindow(5, "7 d"),
+  analytics: true,
+  prefix: "anon_quota",
+});
+

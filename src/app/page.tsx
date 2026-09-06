@@ -75,7 +75,8 @@ const timezonesList = [
 ];
 
 export default function Home() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
+  const [anonQuota, setAnonQuota] = useState<{ remaining: number; limit: number } | null>(null);
   const [lang, setLang] = useState<Language>('en');
   const t = dictionaries[lang];
 
@@ -96,13 +97,29 @@ export default function Home() {
           }
         })
         .catch(() => {
-          if (navigator.language.toLowerCase().includes('id')) {
+          if (typeof navigator !== 'undefined' && navigator.language.toLowerCase().includes('id')) {
             setLang('id');
             localStorage.setItem('fyurl_lang', 'id');
           }
         });
     }
   }, []);
+
+  // Fetch anonymous quota
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      fetch('/api/quota')
+        .then(res => res.json())
+        .then(data => {
+          if (!data.isUnlimited) {
+            setAnonQuota({ remaining: data.remaining, limit: data.limit });
+          }
+        })
+        .catch(console.error);
+    } else {
+      setAnonQuota(null);
+    }
+  }, [status]);
 
   // Handle URL errors (e.g. from middleware redirect on 404)
   useEffect(() => {
@@ -1251,7 +1268,7 @@ export default function Home() {
                 <div className="mt-8 text-center">
                   <button
                     type="submit"
-                    disabled={loading || !longUrl || (requirePassword && password.length < 4) || aliasAvailable === false}
+                    disabled={loading || !longUrl || (requirePassword && password.length < 4) || aliasAvailable === false || (anonQuota !== null && anonQuota.remaining <= 0)}
                     className="w-full sm:w-auto inline-flex items-center justify-center px-12 py-4 text-base font-bold text-white bg-[#0047cc] hover:bg-blue-700 rounded-xl transition-all focus:outline-none focus:ring-4 focus:ring-blue-200 disabled:opacity-70 disabled:cursor-not-allowed group shadow-lg shadow-blue-500/30"
                   >
                     {loading ? (
@@ -1269,6 +1286,20 @@ export default function Home() {
                   <p className="mt-4 text-[11px] font-mono text-slate-500">
                     {lang === 'id' ? 'Tekan' : 'Press'} <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">Enter ↵</span> • {lang === 'id' ? 'Udah siap banget buat disebar ke mana-mana' : 'Ready to share directly to your communication channels'}
                   </p>
+                  
+                  {anonQuota && (
+                    <div className="mt-4 text-center text-sm font-medium animate-in fade-in zoom-in duration-300">
+                      {anonQuota.remaining > 0 ? (
+                        <p className="text-amber-600 bg-amber-50 inline-block px-4 py-2 rounded-full border border-amber-200">
+                          {lang === 'id' ? `Sisa kuota gratis: ${anonQuota.remaining}/${anonQuota.limit} link.` : `Free quota remaining: ${anonQuota.remaining}/${anonQuota.limit} links.`} <Link href="/login" className="underline font-bold hover:text-amber-700">Login</Link> {lang === 'id' ? 'untuk akses tanpa batas!' : 'for unlimited access!'}
+                        </p>
+                      ) : (
+                        <p className="text-red-600 bg-red-50 inline-block px-4 py-2 rounded-full border border-red-200">
+                          {lang === 'id' ? 'Kuota gratis habis!' : 'Free quota exceeded!'} <Link href="/login" className="underline font-bold hover:text-red-700">Login</Link> {lang === 'id' ? 'untuk membuat link lagi.' : 'to create more links.'}
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
               </form>
             ) : (

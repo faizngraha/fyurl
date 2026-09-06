@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { CreateLinkUseCase } from "@/use-cases/create-link.use-case";
 import { LinkRepository } from "@/repositories/link.repository";
 
-import { ratelimit } from "@/lib/ratelimit";
+import { ratelimit, anonQuotaLimit } from "@/lib/ratelimit";
 import { isUrlBlocklisted } from "@/lib/blocklist";
 import { isGoogleSafeBrowsingClear } from "@/lib/safebrowsing";
 
@@ -32,6 +32,20 @@ export async function POST(request: Request) {
       );
     }
 
+    const session = await getServerSession(authOptions);
+    const userId = session?.user ? (session.user as any).id : undefined;
+
+    // 1.5 Anonymous User Quota Check
+    if (!userId) {
+      const anonQuota = await anonQuotaLimit.limit(ip);
+      if (!anonQuota.success) {
+        return NextResponse.json(
+          { error: "You have reached the limit of 5 free links per week. Please log in for unlimited links." },
+          { status: 429 }
+        );
+      }
+    }
+
     const body = await request.json();
     const { longUrl, customAlias, domainId, expiresIn, password, unlockAt, title, ogTitle, ogDescription, ogImage } = body;
 
@@ -49,10 +63,6 @@ export async function POST(request: Request) {
     if (!isSafe) {
       return NextResponse.json({ error: "This URL has been flagged as unsafe (Phishing/Malware) by Google Safe Browsing." }, { status: 400 });
     }
-
-    // 4. Authenticate User (Optional)
-    const session = await getServerSession(authOptions);
-    const userId = session?.user ? (session.user as any).id : undefined;
 
     const link = await createLinkUseCase.execute({
       longUrl,
