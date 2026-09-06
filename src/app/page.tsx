@@ -1346,7 +1346,7 @@ export default function Home() {
                     
                     <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-2">
                       <button
-                        onClick={() => setResult(null)}
+                        onClick={() => window.location.reload()}
                         className="text-primary-600 hover:text-primary-700 font-medium flex-1 flex items-center justify-center transition-colors group bg-primary-50 px-4 py-3 rounded-xl border border-primary-100"
                       >
                         <ArrowRight className="w-4 h-4 mr-2 rotate-180 group-hover:-translate-x-1 transition-transform" />
