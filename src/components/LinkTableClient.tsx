@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, Plus, MoreHorizontal, ExternalLink, Copy, BarChart3, ChevronRight, X, QrCode, Download } from 'lucide-react';
+import { Search, Plus, MoreHorizontal, ExternalLink, Copy, BarChart3, ChevronRight, X, QrCode, Download, Edit2, Loader2 } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
 import toast from 'react-hot-toast';
 import CreateLinkModal from './CreateLinkModal';
@@ -21,6 +21,9 @@ export default function LinkTableClient({ initialLinks, customDomains = [], base
   const [selectedLink, setSelectedLink] = useState<any | null>(null);
   const [qrModalLink, setQrModalLink] = useState<any | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isEditingUrl, setIsEditingUrl] = useState(false);
+  const [editUrlValue, setEditUrlValue] = useState('');
+  const [isSavingUrl, setIsSavingUrl] = useState(false);
   const router = useRouter();
 
   const filteredLinks = links.filter(
@@ -84,6 +87,44 @@ export default function LinkTableClient({ initialLinks, customDomains = [], base
     }
   };
 
+  const handleSelectLink = (link: any | null) => {
+    setSelectedLink(link);
+    setIsEditingUrl(false);
+  };
+
+  const handleSaveUrl = async () => {
+    if (!selectedLink) return;
+    if (!editUrlValue.trim()) {
+      toast.error('URL cannot be empty');
+      return;
+    }
+
+    setIsSavingUrl(true);
+    try {
+      const res = await fetch(`/api/links/${selectedLink.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ longUrl: editUrlValue }),
+      });
+      
+      const data = await res.json();
+      if (res.ok) {
+        const updatedLinks = links.map(l => l.id === selectedLink.id ? { ...l, longUrl: data.link.longUrl } : l);
+        setLinks(updatedLinks);
+        setSelectedLink({ ...selectedLink, longUrl: data.link.longUrl });
+        setIsEditingUrl(false);
+        toast.success('Destination URL updated successfully');
+      } else {
+        toast.error(data.error || 'Failed to update URL');
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error('An error occurred while updating the URL');
+    } finally {
+      setIsSavingUrl(false);
+    }
+  };
+
   return (
     <>
       <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
@@ -121,7 +162,7 @@ export default function LinkTableClient({ initialLinks, customDomains = [], base
                 {filteredLinks.map((link) => (
                   <div
                     key={link.id}
-                    onClick={() => setSelectedLink(link)}
+                    onClick={() => handleSelectLink(link)}
                     className={`p-4 hover:bg-primary-50/50 cursor-pointer transition-colors ${selectedLink?.id === link.id ? 'bg-primary-50' : ''}`}
                   >
                     <div className="flex justify-between items-start mb-2">
@@ -198,7 +239,7 @@ export default function LinkTableClient({ initialLinks, customDomains = [], base
                   filteredLinks.map((link) => (
                     <tr 
                       key={link.id} 
-                      onClick={() => setSelectedLink(link)}
+                      onClick={() => handleSelectLink(link)}
                       className={`hover:bg-primary-50/50 cursor-pointer transition-colors ${selectedLink?.id === link.id ? 'bg-primary-50' : ''}`}
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -263,7 +304,7 @@ export default function LinkTableClient({ initialLinks, customDomains = [], base
                 Quick Analytics
               </h3>
               <button 
-                onClick={() => setSelectedLink(null)}
+                onClick={() => handleSelectLink(null)}
                 className="p-2 rounded-full hover:bg-muted text-muted-foreground transition-colors"
               >
                 <X className="w-5 h-5" />
@@ -286,10 +327,49 @@ export default function LinkTableClient({ initialLinks, customDomains = [], base
                     </a>
                   </div>
                   <div>
-                    <span className="text-xs text-muted-foreground block mb-1">Destination</span>
-                    <p className="text-sm text-foreground break-all leading-tight bg-muted px-2 py-1 rounded">
-                      {selectedLink.longUrl}
-                    </p>
+                    <span className="text-xs text-muted-foreground mb-1 flex items-center justify-between">
+                      <span>Destination</span>
+                      {!isEditingUrl && (
+                        <button 
+                          onClick={() => { setIsEditingUrl(true); setEditUrlValue(selectedLink.longUrl); }} 
+                          className="text-primary-600 hover:text-primary-700 hover:underline flex items-center gap-1 font-medium transition-colors"
+                        >
+                          <Edit2 className="w-3 h-3" /> Edit
+                        </button>
+                      )}
+                    </span>
+                    {isEditingUrl ? (
+                      <div className="flex flex-col gap-2 mt-1 animate-in fade-in slide-in-from-top-1 duration-200">
+                        <textarea
+                          value={editUrlValue}
+                          onChange={(e) => setEditUrlValue(e.target.value)}
+                          className="w-full px-3 py-2 text-sm border border-primary-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-[60px] resize-none"
+                          disabled={isSavingUrl}
+                          placeholder="https://example.com/very-long-url"
+                        />
+                        <div className="flex gap-2 justify-end">
+                          <button 
+                            onClick={() => setIsEditingUrl(false)} 
+                            disabled={isSavingUrl} 
+                            className="text-xs px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-md transition-colors"
+                          >
+                            Cancel
+                          </button>
+                          <button 
+                            onClick={handleSaveUrl} 
+                            disabled={isSavingUrl} 
+                            className="text-xs px-3 py-1.5 bg-primary-600 text-white hover:bg-primary-700 font-medium rounded-md flex items-center transition-colors"
+                          >
+                            {isSavingUrl ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : null}
+                            Save
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-foreground break-all leading-tight bg-muted px-2 py-1.5 rounded-lg border border-slate-100">
+                        {selectedLink.longUrl}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <span className="text-xs text-muted-foreground block mb-1">Created</span>
