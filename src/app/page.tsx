@@ -618,6 +618,35 @@ export default function Home() {
             {activeTab === 'shortener' && (
               !result ? (
               <form onSubmit={handleSubmit} className="p-6 sm:p-10">
+                {anonQuota && (
+                  <div className="mb-6 w-full animate-in fade-in zoom-in duration-300">
+                    {anonQuota.remaining > 0 ? (
+                      <div className="bg-amber-50 border border-amber-200 text-amber-700 text-sm p-4 rounded-xl flex items-start gap-3">
+                        <span className="text-xl">⚠️</span>
+                        <div>
+                          <p className="font-bold mb-1">
+                            {lang === 'id' ? `Sisa kuota gratis: ${anonQuota.remaining}/${anonQuota.limit} link.` : `Free quota remaining: ${anonQuota.remaining}/${anonQuota.limit} links.`}
+                          </p>
+                          <p>
+                            <Link href="/login" className="underline font-bold hover:text-amber-800">Login</Link> {lang === 'id' ? 'sekarang untuk buat link tanpa batas!' : 'now to create unlimited links!'}
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="bg-red-50 border border-red-200 text-red-700 text-sm p-4 rounded-xl flex items-start gap-3">
+                        <Shield className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+                        <div>
+                          <p className="font-bold mb-1">
+                            {lang === 'id' ? 'Kuota gratis habis!' : 'Free quota exceeded!'}
+                          </p>
+                          <p>
+                            <Link href="/login" className="underline font-bold hover:text-red-800">Login</Link> {lang === 'id' ? 'untuk lanjut membuat link lagi.' : 'to continue creating links.'}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
                 {error && (
                   <div className="mb-6 p-4 bg-red-50 text-red-700 text-sm rounded-xl border border-red-100 flex items-start gap-3">
                     <Shield className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
@@ -1286,20 +1315,6 @@ export default function Home() {
                   <p className="mt-4 text-[11px] font-mono text-slate-500">
                     {lang === 'id' ? 'Tekan' : 'Press'} <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">Enter ↵</span> • {lang === 'id' ? 'Udah siap banget buat disebar ke mana-mana' : 'Ready to share directly to your communication channels'}
                   </p>
-                  
-                  {anonQuota && (
-                    <div className="mt-4 text-center text-sm font-medium animate-in fade-in zoom-in duration-300">
-                      {anonQuota.remaining > 0 ? (
-                        <p className="text-amber-600 bg-amber-50 inline-block px-4 py-2 rounded-full border border-amber-200">
-                          {lang === 'id' ? `Sisa kuota gratis: ${anonQuota.remaining}/${anonQuota.limit} link.` : `Free quota remaining: ${anonQuota.remaining}/${anonQuota.limit} links.`} <Link href="/login" className="underline font-bold hover:text-amber-700">Login</Link> {lang === 'id' ? 'untuk akses tanpa batas!' : 'for unlimited access!'}
-                        </p>
-                      ) : (
-                        <p className="text-red-600 bg-red-50 inline-block px-4 py-2 rounded-full border border-red-200">
-                          {lang === 'id' ? 'Kuota gratis habis!' : 'Free quota exceeded!'} <Link href="/login" className="underline font-bold hover:text-red-700">Login</Link> {lang === 'id' ? 'untuk membuat link lagi.' : 'to create more links.'}
-                        </p>
-                      )}
-                    </div>
-                  )}
                 </div>
               </form>
             ) : (
