@@ -17,8 +17,11 @@ export async function GET(request: Request) {
     }
 
     // Anonymous user
+    const deviceId = request.headers.get("x-device-id");
     const ip = request.headers.get("x-forwarded-for") || "anonymous";
-    const quotaInfo = await anonQuotaLimit.getRemaining(ip);
+    const identifier = deviceId ? `device_${deviceId}` : `ip_${ip}`;
+    
+    const quotaInfo = await anonQuotaLimit.getRemaining(identifier);
 
     return NextResponse.json({
       isUnlimited: false,

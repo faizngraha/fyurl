@@ -37,7 +37,10 @@ export async function POST(request: Request) {
 
     // 1.5 Anonymous User Quota Check
     if (!userId) {
-      const anonQuota = await anonQuotaLimit.limit(ip);
+      const deviceId = request.headers.get("x-device-id");
+      const identifier = deviceId ? `device_${deviceId}` : `ip_${ip}`;
+      
+      const anonQuota = await anonQuotaLimit.limit(identifier);
       if (!anonQuota.success) {
         return NextResponse.json(
           { error: "You have reached the limit of 5 free links per week. Please log in for unlimited links." },

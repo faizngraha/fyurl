@@ -74,6 +74,20 @@ const timezonesList = [
   { value: "+13:00", label: "(GMT+13:00) Nuku'alofa" }
 ];
 
+const getDeviceId = () => {
+  if (typeof window !== 'undefined') {
+    let did = localStorage.getItem('fyurl_did');
+    if (!did) {
+      did = typeof crypto !== 'undefined' && crypto.randomUUID 
+        ? crypto.randomUUID() 
+        : Math.random().toString(36).substring(2, 15);
+      localStorage.setItem('fyurl_did', did);
+    }
+    return did;
+  }
+  return '';
+};
+
 export default function Home() {
   const { data: session, status } = useSession();
   const [anonQuota, setAnonQuota] = useState<{ remaining: number; limit: number } | null>(null);
@@ -108,7 +122,11 @@ export default function Home() {
   // Fetch anonymous quota
   useEffect(() => {
     if (status === 'unauthenticated') {
-      fetch('/api/quota')
+      fetch('/api/quota', {
+        headers: {
+          'x-device-id': getDeviceId()
+        }
+      })
         .then(res => res.json())
         .then(data => {
           if (!data.isUnlimited) {
@@ -306,7 +324,10 @@ export default function Home() {
     try {
       const res = await fetch('/api/links', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-device-id': getDeviceId()
+        },
         body: JSON.stringify({ longUrl: finalUrl }),
       });
       const data = await res.json();
@@ -443,7 +464,10 @@ export default function Home() {
       
       const res = await fetch('/api/links', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-device-id': getDeviceId()
+        },
         body: JSON.stringify({ 
           longUrl: finalUrl, 
           title: title || undefined,
