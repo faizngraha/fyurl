@@ -1124,15 +1124,15 @@ export default function Home() {
 
                     <div className="pb-4 sm:pb-5">
                       <div className="bg-transparent flex flex-col sm:flex-row items-center gap-4">
-                        <div className="w-16 h-16 rounded-xl bg-white flex items-center justify-center shrink-0 border border-blue-100 p-1 shadow-sm overflow-hidden pointer-events-none">
+                        <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-xl bg-white flex items-center justify-center shrink-0 border border-blue-100 p-2 shadow-sm overflow-hidden pointer-events-none">
                           <QRCodeCanvas 
                             value="https://fyurl.id/preview" 
-                            size={56}
+                            size={96}
                             level="H"
                             imageSettings={qrLogo ? {
                               src: qrLogo,
-                              height: 16,
-                              width: 16,
+                              height: 28,
+                              width: 28,
                               excavate: true,
                             } : undefined}
                           />
