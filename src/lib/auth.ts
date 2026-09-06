@@ -54,7 +54,8 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async signIn({ user, account }) {
       if (account?.provider === "google") {
-        if (!user.emailVerified && user.email) {
+        const u = user as any;
+        if (!u.emailVerified && user.email) {
           await prisma.user.update({
             where: { email: user.email },
             data: { emailVerified: new Date() }

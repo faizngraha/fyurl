@@ -1124,12 +1124,18 @@ export default function Home() {
 
                     <div className="pb-4 sm:pb-5">
                       <div className="bg-transparent flex flex-col sm:flex-row items-center gap-4">
-                        <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center shrink-0 border border-blue-100">
-                          {qrLogo ? (
-                              <img src={qrLogo} alt="Logo" className="w-8 h-8 object-contain" />
-                          ) : (
-                              <div className="w-5 h-5 bg-blue-500 rounded-sm"></div> /* Placeholder icon for file */
-                          )}
+                        <div className="w-16 h-16 rounded-xl bg-white flex items-center justify-center shrink-0 border border-blue-100 p-1 shadow-sm overflow-hidden pointer-events-none">
+                          <QRCodeCanvas 
+                            value="https://fyurl.id/preview" 
+                            size={56}
+                            level="H"
+                            imageSettings={qrLogo ? {
+                              src: qrLogo,
+                              height: 16,
+                              width: 16,
+                              excavate: true,
+                            } : undefined}
+                          />
                         </div>
                         <div className="flex-1 text-center sm:text-left">
                           <h4 className="font-bold text-sm text-slate-800 mb-0.5">{lang === 'id' ? 'Pilih file logo (mendingan pakai PNG transparan)' : 'Select logo file (Transparent PNG recommended)'}</h4>
