@@ -683,11 +683,11 @@ export default function Home() {
                           >
                             {aliasExpiresAt && (
                               <p className="text-red-700 font-medium mb-2 flex items-start gap-1.5">
-                                <span className="mt-0.5">⏱️</span> 
+                                <Clock className="w-4 h-4 mt-0.5 shrink-0" />
                                 <span>
                                   {lang === 'id' 
-                                    ? `Alias ini masih dipakai. Akan tersedia kembali pada: ${new Date(aliasExpiresAt).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}` 
-                                    : `This alias is in use. It will be available again on: ${new Date(aliasExpiresAt).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })}`
+                                    ? `Custom link ini masih dipakai. Akan tersedia kembali pada: ${new Date(aliasExpiresAt).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}` 
+                                    : `This custom link is in use. It will be available again on: ${new Date(aliasExpiresAt).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })}`
                                   }
                                 </span>
                               </p>
