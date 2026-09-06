@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { ArrowRight, Link as LinkIcon, Globe, Shield, Zap, Copy, Download, Loader2, CheckCircle2, QrCode, ChevronDown, Trash2, ShieldAlert, Lock, Eye, EyeOff, Clock, Calendar, HandCoins, LogIn, X, Upload, ExternalLink, RefreshCw, Palette, Clipboard, Check, Share2, GripHorizontal, Scan, Infinity } from 'lucide-react';
+import { ArrowRight, Link as LinkIcon, Globe, Shield, Zap, Copy, Download, Loader2, CheckCircle2, QrCode, ChevronDown, Trash2, ShieldAlert, Lock, Eye, EyeOff, Clock, Calendar, HandCoins, LogIn, X, Upload, ExternalLink, RefreshCw, Palette, Clipboard, Check, Share2, GripHorizontal, Scan, Infinity, AlertTriangle } from 'lucide-react';
 import jsQR from "jsqr";
 import { QRCodeCanvas } from 'qrcode.react';
 import Link from 'next/link';
@@ -578,7 +578,7 @@ export default function Home() {
               <TaglineRotator taglines={t.taglines} />
             </div>
           </h1>
-          <p className="text-lg sm:text-xl text-slate-600 mb-24 leading-relaxed max-w-2xl mx-auto font-medium">
+          <p className="text-lg sm:text-xl text-slate-600 mb-12 leading-relaxed max-w-2xl mx-auto font-medium">
             {t.heroDesc}
           </p>
         </div>
@@ -622,10 +622,10 @@ export default function Home() {
                   <div className="mb-6 w-full animate-in fade-in zoom-in duration-300">
                     {anonQuota.remaining > 0 ? (
                       <div className="bg-amber-50 border border-amber-200 text-amber-700 text-sm p-4 rounded-xl flex items-start gap-3">
-                        <span className="text-xl">⚠️</span>
+                        <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
                         <div>
                           <p className="font-bold mb-1">
-                            {lang === 'id' ? `Sisa kuota gratis: ${anonQuota.remaining}/${anonQuota.limit} link.` : `Free quota remaining: ${anonQuota.remaining}/${anonQuota.limit} links.`}
+                            {lang === 'id' ? `Kuota perminggu: ${anonQuota.remaining}/${anonQuota.limit} link.` : `Weekly quota: ${anonQuota.remaining}/${anonQuota.limit} links.`}
                           </p>
                           <p>
                             <Link href="/login" className="underline font-bold hover:text-amber-800">Login</Link> {lang === 'id' ? 'sekarang untuk buat link tanpa batas!' : 'now to create unlimited links!'}
@@ -634,10 +634,10 @@ export default function Home() {
                       </div>
                     ) : (
                       <div className="bg-red-50 border border-red-200 text-red-700 text-sm p-4 rounded-xl flex items-start gap-3">
-                        <Shield className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+                        <ShieldAlert className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
                         <div>
                           <p className="font-bold mb-1">
-                            {lang === 'id' ? 'Kuota gratis habis!' : 'Free quota exceeded!'}
+                            {lang === 'id' ? 'Kuota perminggu habis!' : 'Weekly quota exceeded!'}
                           </p>
                           <p>
                             <Link href="/login" className="underline font-bold hover:text-red-800">Login</Link> {lang === 'id' ? 'untuk lanjut membuat link lagi.' : 'to continue creating links.'}
