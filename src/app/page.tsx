@@ -1505,7 +1505,7 @@ export default function Home() {
             
             {activeTab === 'scan' && (
               <div className="p-6 sm:p-10 animate-in fade-in duration-300">
-                <div className="flex flex-col items-center justify-center p-6 sm:p-8 bg-muted/20 rounded-2xl border border-border min-h-[480px]">
+                <div className="flex flex-col items-center justify-center min-h-[480px]">
                     {!isCameraActive && !scannedQrResult && (
                       <div className="flex flex-col items-center">
                         <div className="mb-6 bg-white p-6 rounded-full shadow-sm border border-slate-100 text-primary-600">

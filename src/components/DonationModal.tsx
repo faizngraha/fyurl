@@ -52,10 +52,13 @@ export default function DonationModal({ isOpen, onClose, lang }: DonationModalPr
               </div>
 
               <div className="px-6 py-5 flex flex-col items-center border-t border-slate-100 bg-slate-50/50">
+                <div className="mb-4 inline-flex items-center gap-2 px-3 py-1.5 bg-blue-100 text-blue-700 rounded-full font-bold text-xs uppercase tracking-wider">
+                  QRIS FYURL
+                </div>
                 <img 
-                  src="/logo/qris.webp" 
+                  src="/logo/qris.png" 
                   alt="QRIS Donation" 
-                  className="w-full max-w-sm max-h-[45vh] sm:max-h-[400px] h-auto object-contain rounded-xl mb-6 shadow-sm border border-slate-200"
+                  className="w-full max-w-sm max-h-[45vh] sm:max-h-[400px] h-auto object-contain rounded-xl mb-6 shadow-sm border border-slate-200 bg-white"
                 />
                 <p className="text-xs sm:text-sm text-slate-500 font-medium text-center px-4">
                   {t.scanQrisText || (lang === 'id' ? 'Tinggal scan aja QRIS di atas pakai e-wallet atau m-banking andalan kamu.' : 'Scan the QRIS code above using your favorite e-wallet or m-banking app.')}
