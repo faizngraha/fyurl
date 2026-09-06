@@ -203,6 +203,13 @@ export default function Home() {
   const [checkingAlias, setCheckingAlias] = useState(false);
   const [aliasSuggestions, setAliasSuggestions] = useState<string[]>([]);
   const [aliasExpiresAt, setAliasExpiresAt] = useState<string | null>(null);
+
+  // Live Camera Scanner States
+  const [isCameraActive, setIsCameraActive] = useState(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const requestRef = useRef<number | null>(null);
   
   useEffect(() => {
     if (!customAlias) {
@@ -297,6 +304,69 @@ export default function Home() {
       setIsGeneratingQr(false);
     }
   };
+
+  useEffect(() => {
+    let stream: MediaStream | null = null;
+    let isActive = true;
+
+    if (activeTab === 'scan' && isCameraActive) {
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+        .then((s) => {
+          if (!isActive) {
+            s.getTracks().forEach(t => t.stop());
+            return;
+          }
+          stream = s;
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+            videoRef.current.play().catch(e => console.error("Video play error:", e));
+          }
+          setCameraError(null);
+          
+          const tick = () => {
+            if (!isActive) return;
+            if (videoRef.current && videoRef.current.readyState === videoRef.current.HAVE_ENOUGH_DATA && canvasRef.current) {
+              const canvas = canvasRef.current;
+              const context = canvas.getContext("2d", { willReadFrequently: true });
+              if (context) {
+                canvas.width = videoRef.current.videoWidth;
+                canvas.height = videoRef.current.videoHeight;
+                context.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+                const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "dontInvert" });
+                if (code) {
+                  setScannedQrResult(code.data);
+                  setIsCameraActive(false);
+                  toast.success(lang === 'id' ? "QR Code berhasil terdeteksi!" : "QR Code detected!");
+                  return;
+                }
+              }
+            }
+            if (isActive) {
+               requestRef.current = requestAnimationFrame(tick);
+            }
+          };
+          requestRef.current = requestAnimationFrame(tick);
+        })
+        .catch((err) => {
+          console.error("Camera access error:", err);
+          if (isActive) {
+            setCameraError(lang === 'id' ? 'Gagal mengakses kamera. Pastikan izin kamera diberikan.' : 'Failed to access camera. Please check permissions.');
+            setIsCameraActive(false);
+          }
+        });
+    }
+
+    return () => {
+      isActive = false;
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+      if (requestRef.current) {
+        cancelAnimationFrame(requestRef.current);
+      }
+    };
+  }, [activeTab, isCameraActive, lang]);
 
   const handleScanQr = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -1435,44 +1505,74 @@ export default function Home() {
             
             {activeTab === 'scan' && (
               <div className="p-6 sm:p-10 animate-in fade-in duration-300">
-                <div className="flex flex-col items-center justify-center p-8 bg-muted/20 rounded-2xl border border-border border-dashed min-h-[480px]">
-                    <div className="mb-6 bg-white p-6 rounded-full shadow-sm border border-slate-100 text-primary-600">
-                      <QrCode className="w-12 h-12" />
-                    </div>
-                    <h3 className="text-xl font-bold text-slate-800 mb-2 text-center">
-                      {lang === 'id' ? 'Terjemahkan QR Code' : 'Decode QR Code'}
-                    </h3>
-                    <p className="text-slate-500 text-center max-w-md mb-8">
-                      {lang === 'id' ? 'Unggah gambar QR Code (JPG, PNG) untuk membaca isi Link/teks di dalamnya.' : 'Upload a QR code image (JPG, PNG) to decode the link/text inside it.'}
-                    </p>
+                <div className="flex flex-col items-center justify-center p-6 sm:p-8 bg-muted/20 rounded-2xl border border-border min-h-[480px]">
+                    {!isCameraActive && !scannedQrResult && (
+                      <div className="flex flex-col items-center">
+                        <div className="mb-6 bg-white p-6 rounded-full shadow-sm border border-slate-100 text-primary-600">
+                          <Scan className="w-12 h-12" />
+                        </div>
+                        <h3 className="text-xl font-bold text-slate-800 mb-2 text-center">
+                          {lang === 'id' ? 'Scan QR Code' : 'Scan QR Code'}
+                        </h3>
+                        <p className="text-slate-500 text-center max-w-sm mb-8 text-sm">
+                          {lang === 'id' ? 'Arahkan kamera ke QR Code untuk menerjemahkan isinya secara instan.' : 'Point your camera at a QR code to decode it instantly.'}
+                        </p>
+                        
+                        <button
+                          onClick={() => {
+                            setScannedQrResult(null);
+                            setIsCameraActive(true);
+                          }}
+                          className="inline-flex items-center justify-center px-8 py-3.5 border border-transparent rounded-xl shadow-sm text-base font-bold text-white bg-primary-600 hover:bg-primary-700 transition-all focus:outline-none mb-4 w-full sm:w-auto"
+                        >
+                          <Scan className="w-5 h-5 mr-2" />
+                          {lang === 'id' ? 'Mulai Scan Kamera' : 'Start Camera Scan'}
+                        </button>
+                      </div>
+                    )}
 
-                    <input 
-                      ref={scanFileInputRef}
-                      type="file"
-                      accept="image/png, image/jpeg, image/webp"
-                      onChange={handleScanQr}
-                      className="hidden"
-                    />
-
-                    <button
-                      onClick={() => scanFileInputRef.current?.click()}
-                      disabled={isScanningQr}
-                      className="inline-flex items-center justify-center px-8 py-4 border border-transparent rounded-xl shadow-sm text-base font-semibold text-white bg-primary-600 hover:bg-primary-700 transition-all focus:outline-none disabled:opacity-70 disabled:cursor-not-allowed mb-8"
-                    >
-                      {isScanningQr ? (
-                        <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> {lang === 'id' ? 'Memproses...' : 'Processing...'}</>
-                      ) : (
-                        <><Upload className="w-5 h-5 mr-2" /> {lang === 'id' ? 'Pilih Gambar QR' : 'Select QR Image'}</>
-                      )}
-                    </button>
+                    {isCameraActive && (
+                      <div className="flex flex-col items-center w-full max-w-md">
+                        <div className="relative w-full aspect-square bg-black rounded-2xl overflow-hidden mb-6 border-4 border-slate-100 shadow-lg">
+                          <video ref={videoRef} playsInline className="absolute top-0 left-0 w-full h-full object-cover" />
+                          <div className="absolute inset-0 pointer-events-none border-[40px] border-black/40 z-10 flex items-center justify-center">
+                            <div className="w-full h-full border-2 border-dashed border-white/70 relative">
+                               <div className="absolute top-0 left-0 w-4 h-4 border-t-4 border-l-4 border-primary-500 -mt-1 -ml-1"></div>
+                               <div className="absolute top-0 right-0 w-4 h-4 border-t-4 border-r-4 border-primary-500 -mt-1 -mr-1"></div>
+                               <div className="absolute bottom-0 left-0 w-4 h-4 border-b-4 border-l-4 border-primary-500 -mb-1 -ml-1"></div>
+                               <div className="absolute bottom-0 right-0 w-4 h-4 border-b-4 border-r-4 border-primary-500 -mb-1 -mr-1"></div>
+                            </div>
+                          </div>
+                          <canvas ref={canvasRef} className="hidden" />
+                        </div>
+                        
+                        {cameraError && (
+                          <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm mb-4 text-center border border-red-100 w-full">
+                            {cameraError}
+                          </div>
+                        )}
+                        
+                        <button
+                          onClick={() => setIsCameraActive(false)}
+                          className="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-colors mb-2 text-sm"
+                        >
+                          {lang === 'id' ? 'Batal Scan' : 'Cancel Scan'}
+                        </button>
+                      </div>
+                    )}
 
                     {scannedQrResult && (
-                      <div className="w-full max-w-lg bg-white rounded-xl border border-primary-200 shadow-sm p-4 animate-in fade-in slide-in-from-bottom-4">
-                        <label className="block text-xs font-bold text-primary-600 uppercase tracking-wider mb-2">
-                          {lang === 'id' ? 'Hasil Terjemahan:' : 'Decoded Result:'}
-                        </label>
-                        <div className="flex items-start gap-3">
-                          <div className="flex-1 bg-slate-50 p-3 rounded-lg border border-slate-200 text-slate-800 text-sm break-all font-mono whitespace-pre-wrap">
+                      <div className="w-full max-w-lg bg-white rounded-xl border border-primary-200 shadow-sm p-4 sm:p-5 animate-in fade-in slide-in-from-bottom-4 mb-8">
+                        <div className="flex items-center justify-between mb-3">
+                          <label className="text-xs font-bold text-primary-600 uppercase tracking-wider">
+                            {lang === 'id' ? 'Hasil Terjemahan:' : 'Decoded Result:'}
+                          </label>
+                          <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-[10px] font-bold flex items-center">
+                            <CheckCircle2 className="w-3 h-3 mr-1" /> Sukses
+                          </span>
+                        </div>
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-start gap-3">
+                          <div className="flex-1 bg-slate-50 p-3 sm:p-4 rounded-xl border border-slate-200 text-slate-800 text-sm break-all font-mono whitespace-pre-wrap min-h-[60px]">
                             {scannedQrResult}
                           </div>
                           <button
@@ -1480,14 +1580,52 @@ export default function Home() {
                               navigator.clipboard.writeText(scannedQrResult);
                               toast.success(lang === 'id' ? 'Berhasil disalin!' : 'Copied to clipboard!');
                             }}
-                            className="p-3 bg-primary-50 text-primary-600 hover:bg-primary-100 rounded-lg transition-colors border border-primary-100 shrink-0"
+                            className="p-3 sm:p-4 bg-primary-50 text-primary-600 hover:bg-primary-100 rounded-xl transition-colors border border-primary-100 shrink-0 flex items-center justify-center gap-2"
                             title="Copy result"
                           >
                             <Copy className="w-5 h-5" />
+                            <span className="sm:hidden font-medium">{lang === 'id' ? 'Salin Hasil' : 'Copy Result'}</span>
                           </button>
+                        </div>
+                        <div className="mt-4 pt-4 border-t border-slate-100 flex justify-center">
+                           <button
+                            onClick={() => {
+                              setScannedQrResult(null);
+                              setIsCameraActive(true);
+                            }}
+                            className="text-primary-600 hover:text-primary-700 text-sm font-bold flex items-center transition-colors"
+                           >
+                             <Scan className="w-4 h-4 mr-1.5" />
+                             {lang === 'id' ? 'Scan QR Lainnya' : 'Scan Another QR'}
+                           </button>
                         </div>
                       </div>
                     )}
+
+                    <div className="mt-4 flex flex-col items-center border-t border-slate-200/60 pt-6 w-full max-w-md">
+                      <p className="text-xs text-slate-400 mb-3 font-medium uppercase tracking-wider">
+                        {lang === 'id' ? 'Atau unggah file gambar' : 'Or upload an image file'}
+                      </p>
+                      <input 
+                        ref={scanFileInputRef}
+                        type="file"
+                        accept="image/png, image/jpeg, image/webp"
+                        onChange={handleScanQr}
+                        className="hidden"
+                      />
+                      <button
+                        onClick={() => scanFileInputRef.current?.click()}
+                        disabled={isScanningQr || isCameraActive}
+                        className="inline-flex items-center justify-center px-6 py-2.5 border border-slate-200 rounded-lg shadow-sm text-sm font-semibold text-slate-700 bg-white hover:bg-slate-50 transition-all focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isScanningQr ? (
+                          <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> {lang === 'id' ? 'Memproses...' : 'Processing...'}</>
+                        ) : (
+                          <><Upload className="w-4 h-4 mr-2 text-slate-500" /> {lang === 'id' ? 'Pilih File QR (JPG/PNG)' : 'Select QR File (JPG/PNG)'}</>
+                        )}
+                      </button>
+                    </div>
+
                   </div>
               </div>
             )}
