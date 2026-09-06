@@ -201,6 +201,8 @@ export default function Home() {
 
   const [aliasAvailable, setAliasAvailable] = useState<boolean | null>(null);
   const [checkingAlias, setCheckingAlias] = useState(false);
+  const [aliasSuggestions, setAliasSuggestions] = useState<string[]>([]);
+  const [aliasExpiresAt, setAliasExpiresAt] = useState<string | null>(null);
   
   useEffect(() => {
     if (!customAlias) {
@@ -219,8 +221,12 @@ export default function Home() {
         const res = await fetch(`/api/check-alias?alias=${customAlias}&domainId=${domainId || ''}`);
         const data = await res.json();
         setAliasAvailable(data.available);
+        setAliasSuggestions(data.suggestions || []);
+        setAliasExpiresAt(data.expiresAt || null);
       } catch (e) {
         setAliasAvailable(null);
+        setAliasSuggestions([]);
+        setAliasExpiresAt(null);
       } finally {
         setCheckingAlias(false);
       }
@@ -667,6 +673,45 @@ export default function Home() {
                           className="flex-1 block w-full px-3 sm:px-4 py-3.5 sm:py-4 text-sm sm:text-base font-semibold text-slate-800 border border-slate-200/60 border-l-0 rounded-none rounded-r-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all bg-white placeholder-slate-400"
                         />
                       </div>
+                      <AnimatePresence>
+                        {aliasAvailable === false && (aliasExpiresAt || aliasSuggestions.length > 0) && (
+                          <motion.div 
+                            initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                            animate={{ opacity: 1, height: 'auto', marginTop: 12 }}
+                            exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                            className="bg-red-50 border border-red-100 rounded-xl p-3 overflow-hidden text-xs"
+                          >
+                            {aliasExpiresAt && (
+                              <p className="text-red-700 font-medium mb-2 flex items-start gap-1.5">
+                                <span className="mt-0.5">⏱️</span> 
+                                <span>
+                                  {lang === 'id' 
+                                    ? `Alias ini masih dipakai. Akan tersedia kembali pada: ${new Date(aliasExpiresAt).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}` 
+                                    : `This alias is in use. It will be available again on: ${new Date(aliasExpiresAt).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })}`
+                                  }
+                                </span>
+                              </p>
+                            )}
+                            {aliasSuggestions.length > 0 && (
+                              <div className="text-red-700">
+                                <p className="mb-1.5 font-medium">{lang === 'id' ? 'Coba saran ini:' : 'Try these suggestions:'}</p>
+                                <div className="flex flex-wrap gap-2">
+                                  {aliasSuggestions.map(s => (
+                                    <button
+                                      key={s}
+                                      type="button"
+                                      onClick={() => setCustomAlias(s)}
+                                      className="px-2.5 py-1 bg-white border border-red-200 rounded-md text-red-600 hover:bg-red-50 transition-colors font-mono"
+                                    >
+                                      {s}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                       <p className="mt-2 text-xs text-slate-500 leading-relaxed max-w-xs">
                         {lang === 'id' ? 'Biarin kosong aja kalau mau dibikinin kode otomatis.' : 'Leave blank for an auto-generated random code.'}
                       </p>

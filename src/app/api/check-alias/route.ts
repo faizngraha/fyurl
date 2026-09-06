@@ -26,7 +26,24 @@ export async function GET(request: Request) {
       if (link && link.expiresAt && link.expiresAt < new Date()) {
         return NextResponse.json({ available: true });
       }
-      return NextResponse.json({ available: false });
+      
+      // Generate suggestions
+      const suffixes = ['123', 'ku', 'pro', 'id', 'link', 'app'];
+      const suggestions: string[] = [];
+      for (const suffix of suffixes) {
+         const sug = `${alias}${suffix}`;
+         const exists = await linkRepository.checkAliasExists(sug, domainId || undefined);
+         if (!exists) {
+            suggestions.push(sug);
+         }
+         if (suggestions.length >= 3) break;
+      }
+
+      return NextResponse.json({ 
+        available: false, 
+        expiresAt: link?.expiresAt || null,
+        suggestions 
+      });
     }
 
     return NextResponse.json({ available: true });
