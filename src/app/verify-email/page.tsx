@@ -18,6 +18,8 @@ function VerifyEmailForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+  const [resendLoading, setResendLoading] = useState(false);
 
   const { lang } = useGeoLang();
   const t = dictionaries[lang];
@@ -27,6 +29,38 @@ function VerifyEmailForm() {
       setEmail(emailParam);
     }
   }, [emailParam]);
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (cooldown > 0) {
+      timer = setTimeout(() => setCooldown(cooldown - 1), 1000);
+    }
+    return () => clearTimeout(timer);
+  }, [cooldown]);
+
+  const handleResend = async () => {
+    if (cooldown > 0 || resendLoading || !email) return;
+    
+    setResendLoading(true);
+    setError('');
+    
+    try {
+      const res = await fetch('/api/auth/resend-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      
+      if (!res.ok) throw new Error(data.error || 'Failed to resend OTP');
+      
+      setCooldown(60); // 60 seconds cooldown
+    } catch (err: any) {
+      setError(err.message || 'An unexpected error occurred.');
+    } finally {
+      setResendLoading(false);
+    }
+  };
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -132,7 +166,23 @@ function VerifyEmailForm() {
                 placeholder="000000"
               />
             </div>
-            <p className="mt-2 text-xs text-slate-500">{t.checkInbox}</p>
+            <div className="flex justify-between items-center mt-2">
+              <p className="text-xs text-slate-500">{t.checkInbox}</p>
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={cooldown > 0 || resendLoading || !email}
+                className="text-xs font-semibold text-primary-600 hover:text-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+              >
+                {resendLoading ? (
+                  <span className="flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin" /> {lang === 'id' ? 'Mengirim...' : 'Sending...'}</span>
+                ) : cooldown > 0 ? (
+                  `${lang === 'id' ? 'Kirim ulang' : 'Resend'} (${cooldown}s)`
+                ) : (
+                  lang === 'id' ? 'Kirim Ulang OTP' : 'Resend OTP'
+                )}
+              </button>
+            </div>
           </div>
 
           <button
