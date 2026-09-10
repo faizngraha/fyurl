@@ -64,8 +64,8 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: "https://fyurl.id",
-    title: "Fyurl (formerly Fylink) | Advanced URL Shortener",
-    description: "Fyurl (formerly Fylink) is a fast, no-nonsense tool to shorten long URLs, create custom aliases, and generate QR codes. Free to use, trackable, and secure.",
+    title: "Fyurl | Advanced URL Shortener",
+    description: "Fyurl is a fast, no-nonsense tool to shorten long URLs, create custom aliases, and generate QR codes. Free to use, trackable, and secure.",
     siteName: "Fyurl",
     images: [
       {
@@ -78,8 +78,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Fyurl (formerly Fylink) | Advanced URL Shortener",
-    description: "Fyurl (formerly Fylink) is a fast, no-nonsense tool to shorten long URLs, create custom aliases, and generate QR codes.",
+    title: "Fyurl | Advanced URL Shortener",
+    description: "Fyurl is a fast, no-nonsense tool to shorten long URLs, create custom aliases, and generate QR codes.",
     images: ["/logo/fyurl-horizontal.png"],
   },
   robots: {
@@ -119,7 +119,6 @@ const jsonLd = {
       "@id": "https://fyurl.id/#website",
       "url": "https://fyurl.id",
       "name": "Fyurl",
-      "alternateName": "Fylink",
       "author": { "@id": "https://fyurl.id/#fayiz" },
       "publisher": { "@id": "https://fyurl.id/#fayiz" },
       "description": "Enterprise-grade URL shortener with custom domains and analytics.",
@@ -127,7 +126,6 @@ const jsonLd = {
     {
       "@type": "SoftwareApplication",
       "name": "Fyurl",
-      "alternateName": "Fylink",
       "operatingSystem": "Web",
       "applicationCategory": "UtilitiesApplication",
       "offers": {
