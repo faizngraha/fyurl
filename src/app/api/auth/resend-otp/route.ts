@@ -34,7 +34,7 @@ export async function POST(req: Request) {
     });
 
     // Send email
-    const emailResult = await sendOtpEmail(email, code, 'register');
+    const emailResult = await sendOtpEmail(email, code, 'register', existingOtp.name || undefined);
 
     if (emailResult && !emailResult.success) {
       return NextResponse.json({ 

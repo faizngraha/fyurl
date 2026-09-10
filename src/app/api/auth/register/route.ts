@@ -44,7 +44,7 @@ export async function POST(req: Request) {
     });
 
     // Send email
-    const emailResult = await sendOtpEmail(email, code);
+    const emailResult = await sendOtpEmail(email, code, 'register', name);
 
     if (emailResult && !emailResult.success) {
       return NextResponse.json({ 

@@ -39,7 +39,7 @@ export async function POST(req: Request) {
     });
 
     // Send email
-    const emailResult = await sendOtpEmail(email, code, 'reset');
+    const emailResult = await sendOtpEmail(email, code, 'reset', existingUser.name || undefined);
 
     if (emailResult && !emailResult.success) {
       return NextResponse.json({ 

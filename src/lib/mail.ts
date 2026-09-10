@@ -1,6 +1,6 @@
 import { Resend } from 'resend';
 
-export const sendOtpEmail = async (email: string, code: string, type: 'register' | 'reset' = 'register') => {
+export const sendOtpEmail = async (email: string, code: string, type: 'register' | 'reset' = 'register', name?: string) => {
   const resend = new Resend(process.env.RESEND_API_KEY || 're_dummy_key_for_build');
 
   const subject = type === 'reset' ? 'Reset Your Password' : 'Your Verification Code';
@@ -8,6 +8,8 @@ export const sendOtpEmail = async (email: string, code: string, type: 'register'
   const textBody = type === 'reset' 
     ? 'You have requested to reset your password. Please use the following OTP code to proceed. This code is valid for 10 minutes.' 
     : 'Thank you for registering. Please use the following OTP code to verify your email address. This code is valid for 10 minutes.';
+
+  const greetingName = name || 'there';
 
   const htmlContent = `
 <!DOCTYPE html>
@@ -114,7 +116,7 @@ export const sendOtpEmail = async (email: string, code: string, type: 'register'
       <h2 class="title">${heading}</h2>
     </div>
     <div class="content">
-      <p class="greeting">Hi there,</p>
+      <p class="greeting">Hi ${greetingName},</p>
       <p class="message">${textBody}</p>
       
       <div class="otp-wrapper">
