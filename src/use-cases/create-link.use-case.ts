@@ -1,6 +1,7 @@
 import { ILinkRepository } from "@/repositories/link.repository";
 import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
+import { redis } from "@/lib/redis";
 
 function generateShortCode(length = 7): string {
   const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -38,6 +39,8 @@ export class CreateLinkUseCase {
     }
 
     // 1.5. Validate Domain Ownership
+    let domainName = process.env.NEXT_PUBLIC_APP_URL?.replace(/^https?:\/\//, '') || 'fyurl.id';
+    
     if (data.domainId) {
       const domain = await prisma.customDomain.findUnique({
         where: { id: data.domainId }
@@ -48,6 +51,7 @@ export class CreateLinkUseCase {
       if (domain.userId !== 'admin-system' && domain.userId !== data.userId) {
         throw new Error("You do not have permission to use this custom domain");
       }
+      domainName = domain.domain;
     }
 
     // 2. Determine short code
@@ -141,7 +145,45 @@ export class CreateLinkUseCase {
       ogImage: data.ogImage,
     });
 
-    // 4. Set to Redis Cache (TODO - to be implemented with Edge Middleware setup)
+    // 4. Set to Redis Cache immediately for fast first-redirect
+    try {
+      let ttl = 3600;
+      if (expiresAt) {
+        const secondsUntilExpiry = Math.floor((expiresAt.getTime() - Date.now()) / 1000);
+        if (secondsUntilExpiry < 3600) {
+          ttl = Math.max(1, secondsUntilExpiry);
+        }
+      }
+
+      const cacheKey = `domain:${domainName}:code:${(shortCode as string).toLowerCase()}`;
+      
+      const isTimeLocked = data.unlockAt ? new Date(data.unlockAt) > new Date() : false;
+      const isLocked = !!data.password || isTimeLocked;
+      const hasCustomOg = !!data.ogTitle || !!data.ogDescription || !!data.ogImage;
+
+      if (isLocked) {
+        const lockData = {
+          locked: true,
+          hasPassword: !!data.password,
+          unlockAt: data.unlockAt ? new Date(data.unlockAt).toISOString() : null,
+          title: data.title || null,
+        };
+        await redis.setex(cacheKey, ttl, JSON.stringify(lockData));
+      } else if (hasCustomOg) {
+        const ogData = {
+          hasCustomOg: true,
+          longUrl: parsedUrl.toString(),
+          ogTitle: data.ogTitle,
+          ogDescription: data.ogDescription,
+          hasOgImage: !!data.ogImage,
+        };
+        await redis.setex(cacheKey, ttl, JSON.stringify(ogData));
+      } else {
+        await redis.setex(cacheKey, ttl, parsedUrl.toString());
+      }
+    } catch (e) {
+      console.error("Failed to populate Redis cache on creation", e);
+    }
 
     return link;
   }
