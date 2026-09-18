@@ -1400,8 +1400,8 @@ export default function Home() {
                         className="rounded-lg"
                         imageSettings={{
                           src: qrLogo,
-                          height: qrLogoRatio > 1 ? 200 / qrLogoRatio : 200,
-                          width: qrLogoRatio > 1 ? 200 : 200 * qrLogoRatio,
+                          height: qrLogoRatio > 1 ? 300 / qrLogoRatio : 300,
+                          width: qrLogoRatio > 1 ? 300 : 300 * qrLogoRatio,
                           excavate: true,
                         }}
                       />
@@ -1587,8 +1587,8 @@ export default function Home() {
                           bgColor={transparentBg ? 'rgba(255,255,255,0)' : qrBgColor}
                           imageSettings={qrLogo ? {
                             src: qrLogo,
-                            height: qrLogoRatio > 1 ? 200 / qrLogoRatio : 200,
-                            width: qrLogoRatio > 1 ? 200 : 200 * qrLogoRatio,
+                            height: qrLogoRatio > 1 ? 300 / qrLogoRatio : 300,
+                            width: qrLogoRatio > 1 ? 300 : 300 * qrLogoRatio,
                             excavate: true,
                           } : undefined}
                         />
