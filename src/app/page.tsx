@@ -322,13 +322,14 @@ export default function Home() {
 
     setIsGeneratingQr(true);
     try {
+      const finalExpiresIn = expiresIn === 'custom' ? `${customDays}d` : expiresIn;
       const res = await fetch('/api/links', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
           'x-device-id': getDeviceId()
         },
-        body: JSON.stringify({ longUrl: finalUrl }),
+        body: JSON.stringify({ longUrl: finalUrl, expiresIn: finalExpiresIn || undefined }),
       });
       const data = await res.json();
       if (res.ok) {
@@ -1434,7 +1435,47 @@ export default function Home() {
                     }}
                     className="block w-full px-4 py-4 text-base border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all bg-muted/30 focus:bg-white resize-none min-h-[120px]"
                   />
-                  <div className="mt-4 flex justify-end">
+                  
+                  <div className="mt-6 mb-2">
+                    <label className="block text-sm font-bold text-slate-800 mb-3">
+                      {lang === 'id' ? 'Kedaluwarsa QR Code' : 'QR Expiration'} <span className="text-red-500">*</span>
+                    </label>
+                    <div className="flex flex-nowrap gap-1 min-[360px]:gap-1.5 sm:gap-2 w-full">
+                      {[
+                        { v: '1d', l: lang === 'id' ? '24 Jam' : '24 Hours' },
+                        { v: '3d', l: lang === 'id' ? '3 Hari (Bawaan)' : '3 Days (Default)' },
+                        { v: '7d', l: lang === 'id' ? '7 Hari' : '7 Days' },
+                        { v: '30d', l: lang === 'id' ? '30 Hari' : '30 Days' },
+                        { v: 'never', l: lang === 'id' ? 'Selamanya ∞' : 'Forever ∞' }
+                      ].map((opt) => (
+                        <button
+                          key={opt.v}
+                          type="button"
+                          onClick={() => setExpiresIn(opt.v)}
+                          className={`flex-1 py-2 sm:py-3 px-0.5 sm:px-2 rounded-lg sm:rounded-xl text-[9px] min-[360px]:text-[10px] sm:text-sm font-semibold transition-all flex flex-col items-center justify-center gap-0.5 sm:gap-1 border ${
+                            expiresIn === opt.v 
+                              ? 'bg-[#0047cc] text-white border-[#0047cc] shadow-md' 
+                              : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                          }`}
+                        >
+                          <div className="flex items-center justify-center gap-0.5 sm:gap-1.5 whitespace-nowrap w-full">
+                            {expiresIn === opt.v && <Check className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 shrink-0" />}
+                            <span className="hidden sm:inline text-center">{opt.l.split(' (')[0]}</span>
+                            <span className="sm:hidden text-center flex justify-center items-center h-full">
+                              {opt.v === 'never' ? <Infinity className="w-4 h-4" /> : opt.l.split(' (')[0]}
+                            </span>
+                          </div>
+                          {opt.l.includes('(') && (
+                            <span className={`hidden sm:block text-[10px] ${expiresIn === opt.v ? 'text-blue-200' : 'text-slate-400'}`}>
+                              ({opt.l.split(' (')[1]}
+                            </span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="mt-6 flex justify-end">
                     <button
                       onClick={handleGenerateTrackableQr}
                       disabled={isGeneratingQr || !qrText.trim()}
