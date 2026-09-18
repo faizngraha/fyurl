@@ -1474,20 +1474,6 @@ export default function Home() {
                       ))}
                     </div>
                   </div>
-
-                  <div className="mt-6 flex justify-end">
-                    <button
-                      onClick={handleGenerateTrackableQr}
-                      disabled={isGeneratingQr || !qrText.trim()}
-                      className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-xl shadow-lg text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition-all focus:outline-none"
-                    >
-                      {isGeneratingQr ? (
-                        <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> {lang === 'id' ? 'Memproses...' : 'Processing...'}</>
-                      ) : (
-                        lang === 'id' ? 'Buat QR Code' : 'Generate QR Code'
-                      )}
-                    </button>
-                  </div>
                 </div>
 
                 <div className="mb-8 grid grid-cols-2 gap-6 sm:grid-cols-4">
@@ -1559,10 +1545,23 @@ export default function Home() {
                           onChange={(e) => setTransparentBg(e.target.checked)} 
                           className="w-4 h-4 rounded border-gray-300 accent-primary-600 cursor-pointer" 
                         />
-                        {t.transparent}
                       </label>
                     </div>
                   </div>
+                </div>
+
+                <div className="mb-10 flex justify-end">
+                  <button
+                    onClick={handleGenerateTrackableQr}
+                    disabled={isGeneratingQr || !qrText.trim()}
+                    className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-xl shadow-lg text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition-all focus:outline-none"
+                  >
+                    {isGeneratingQr ? (
+                      <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> {lang === 'id' ? 'Memproses...' : 'Processing...'}</>
+                    ) : (
+                      lang === 'id' ? 'Buat QR Code' : 'Generate QR Code'
+                    )}
+                  </button>
                 </div>
 
                 <div className="flex flex-col items-center justify-center p-4 sm:p-8 bg-muted/20 rounded-2xl border border-border border-dashed min-h-[480px] w-full">
