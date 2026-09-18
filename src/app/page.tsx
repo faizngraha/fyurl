@@ -195,6 +195,7 @@ export default function Home() {
   const [qrBgColor, setQrBgColor] = useState('#ffffff');
   const [transparentBg, setTransparentBg] = useState(false);
   const [qrLogo, setQrLogo] = useState<string>('/logo/fyurl-logo-tp.png');
+  const [qrLogoRatio, setQrLogoRatio] = useState<number>(1);
   const [qrShortLink, setQrShortLink] = useState<string | null>(null);
   const [isGeneratingQr, setIsGeneratingQr] = useState(false);
   const [qrMode, setQrMode] = useState<'generate' | 'scan'>('generate');
@@ -1272,8 +1273,8 @@ export default function Home() {
                             level="H"
                             imageSettings={qrLogo ? {
                               src: qrLogo,
-                              height: 28,
-                              width: 28,
+                              height: qrLogoRatio > 1 ? 28 / qrLogoRatio : 28,
+                              width: qrLogoRatio > 1 ? 28 : 28 * qrLogoRatio,
                               excavate: true,
                             } : undefined}
                           />
@@ -1399,8 +1400,8 @@ export default function Home() {
                         className="rounded-lg"
                         imageSettings={{
                           src: qrLogo,
-                          height: 200,
-                          width: 200,
+                          height: qrLogoRatio > 1 ? 200 / qrLogoRatio : 200,
+                          width: qrLogoRatio > 1 ? 200 : 200 * qrLogoRatio,
                           excavate: true,
                         }}
                       />
@@ -1493,7 +1494,13 @@ export default function Home() {
                             }
                             const reader = new FileReader();
                             reader.onload = (event) => {
-                              setQrLogo(event.target?.result as string);
+                              const src = event.target?.result as string;
+                              const img = new Image();
+                              img.onload = () => {
+                                setQrLogoRatio(img.width / img.height);
+                                setQrLogo(src);
+                              };
+                              img.src = src;
                             };
                             reader.readAsDataURL(file);
                           }
@@ -1505,6 +1512,7 @@ export default function Home() {
                           type="button"
                           onClick={() => {
                             setQrLogo('/logo/fyurl-logo-tp.png');
+                            setQrLogoRatio(1);
                             if (fileInputRef.current) fileInputRef.current.value = '';
                           }}
                           className="p-3 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl border border-red-200 transition-colors"
@@ -1579,8 +1587,8 @@ export default function Home() {
                           bgColor={transparentBg ? 'rgba(255,255,255,0)' : qrBgColor}
                           imageSettings={qrLogo ? {
                             src: qrLogo,
-                            height: 200,
-                            width: 200,
+                            height: qrLogoRatio > 1 ? 200 / qrLogoRatio : 200,
+                            width: qrLogoRatio > 1 ? 200 : 200 * qrLogoRatio,
                             excavate: true,
                           } : undefined}
                         />
