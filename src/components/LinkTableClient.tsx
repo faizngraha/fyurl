@@ -24,6 +24,7 @@ export default function LinkTableClient({ initialLinks, customDomains = [], base
   const [isEditingUrl, setIsEditingUrl] = useState(false);
   const [editUrlValue, setEditUrlValue] = useState('');
   const [isSavingUrl, setIsSavingUrl] = useState(false);
+  const [isReactivating, setIsReactivating] = useState(false);
   const router = useRouter();
 
   const filteredLinks = links.filter(
@@ -122,6 +123,34 @@ export default function LinkTableClient({ initialLinks, customDomains = [], base
       toast.error('An error occurred while updating the URL');
     } finally {
       setIsSavingUrl(false);
+    }
+  };
+
+  const handleReactivate = async () => {
+    if (!selectedLink) return;
+    
+    setIsReactivating(true);
+    try {
+      const res = await fetch(`/api/links/${selectedLink.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'reactivate' }),
+      });
+      
+      const data = await res.json();
+      if (res.ok) {
+        const updatedLinks = links.map(l => l.id === selectedLink.id ? { ...l, expiresAt: null } : l);
+        setLinks(updatedLinks);
+        setSelectedLink({ ...selectedLink, expiresAt: null });
+        toast.success('Link reactivated (expiration removed)!');
+      } else {
+        toast.error(data.error || 'Failed to reactivate link');
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error('An error occurred while reactivating');
+    } finally {
+      setIsReactivating(false);
     }
   };
 
@@ -381,6 +410,14 @@ export default function LinkTableClient({ initialLinks, customDomains = [], base
                       })}
                     </p>
                   </div>
+                  {selectedLink.expiresAt && (
+                    <div>
+                      <span className="text-xs text-muted-foreground block mb-1">Status</span>
+                      <p className={`text-sm font-medium ${new Date(selectedLink.expiresAt) < new Date() ? 'text-red-600' : 'text-amber-600'}`}>
+                        {new Date(selectedLink.expiresAt) < new Date() ? 'Expired' : 'Expires at: ' + new Date(selectedLink.expiresAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -391,6 +428,15 @@ export default function LinkTableClient({ initialLinks, customDomains = [], base
                 >
                   View Full Analytics
                 </Link>
+                {selectedLink.expiresAt && (
+                  <button 
+                    onClick={handleReactivate}
+                    disabled={isReactivating}
+                    className="w-full inline-flex items-center justify-center px-4 py-2 border border-green-200 rounded-lg text-sm font-medium text-green-700 bg-green-50 hover:bg-green-100 focus:outline-none transition-colors disabled:opacity-50"
+                  >
+                    {isReactivating ? 'Reactivating...' : 'Reactivate Link'}
+                  </button>
+                )}
                 <button 
                   onClick={() => handleDelete(selectedLink.id)}
                   disabled={isDeleting}

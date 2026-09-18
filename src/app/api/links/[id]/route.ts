@@ -81,7 +81,27 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     }
 
     const body = await request.json();
-    let { longUrl } = body;
+    let { longUrl, action } = body;
+
+    if (action === 'reactivate') {
+      const updatedLink = await prisma.link.update({
+        where: { id },
+        data: { expiresAt: null }
+      });
+
+      // Invalidate Cache
+      const domainsToClear = ['fyurl.id', 'fylink.id'];
+      if (link.domain?.domain) {
+        domainsToClear.push(link.domain.domain);
+      }
+
+      for (const d of domainsToClear) {
+        const cacheKey = `domain:${d}:code:${link.shortCode.toLowerCase()}`;
+        await redis.del(cacheKey);
+      }
+
+      return NextResponse.json({ success: true, link: updatedLink });
+    }
 
     if (!longUrl) {
       return NextResponse.json({ error: 'Missing destination URL' }, { status: 400 });
