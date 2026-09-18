@@ -1479,7 +1479,7 @@ export default function Home() {
                     <button
                       onClick={handleGenerateTrackableQr}
                       disabled={isGeneratingQr || !qrText.trim()}
-                      className="inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-xl shadow-lg text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition-all focus:outline-none"
+                      className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-xl shadow-lg text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition-all focus:outline-none"
                     >
                       {isGeneratingQr ? (
                         <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> {lang === 'id' ? 'Memproses...' : 'Processing...'}</>
